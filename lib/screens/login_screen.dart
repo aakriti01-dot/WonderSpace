@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -19,9 +20,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   static const Color cream = Color(0xFFFAF7F2);
   static const Color teal = Color(0xFF5D8A85);
-  static const Color mustard = Color(0xFFD9AE54);
   static const Color terracotta = Color(0xFFBA6D4D);
-  static const Color sage = Color(0xFF8EA88E);
+  static const Color mustard = Color(0xFFD9AE54);
 
   @override
   void dispose() {
@@ -30,6 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // EMAIL AND PASSWORD LOGIN
   Future<void> _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
@@ -39,9 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -50,7 +49,6 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (!mounted) return;
-
       _showMessage('Welcome back to WonderSpace! ✨');
     } on FirebaseAuthException catch (e) {
       String message;
@@ -85,13 +83,54 @@ class _LoginScreenState extends State<LoginScreen> {
       _showMessage('Something went wrong. Please try again.');
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
 
+  // GOOGLE SIGN-IN
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await GoogleSignIn.instance.initialize();
+
+      final GoogleSignInAccount googleUser =
+      await GoogleSignIn.instance.authenticate();
+
+      final GoogleSignInAuthentication googleAuth =
+          googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+      );
+
+      await FirebaseAuth.instance.signInWithCredential(credential);
+
+      if (!mounted) return;
+      _showMessage('Welcome to WonderSpace! ✨');
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      _showMessage(e.message ?? 'Google sign-in failed.');
+    } on GoogleSignInException catch (e) {
+      if (!mounted) return;
+
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        _showMessage('Google sign-in cancelled.');
+      } else {
+        _showMessage('Google sign-in failed. Please try again.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showMessage('Something went wrong. Please try again.');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // FORGOT PASSWORD
   Future<void> _forgotPassword() async {
     final email = _emailController.text.trim();
 
@@ -113,6 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // SNACKBAR
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -132,6 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // INPUT DECORATION
   InputDecoration _inputDecoration({
     required String hint,
     required IconData icon,
@@ -140,49 +181,56 @@ class _LoginScreenState extends State<LoginScreen> {
     return InputDecoration(
       hintText: hint,
       hintStyle: GoogleFonts.nunito(
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: FontWeight.w600,
-        color: const Color(0xFFAAA49B),
+        color: const Color(0xFF827D75),
       ),
       prefixIcon: Icon(
         icon,
         color: teal,
         size: 22,
       ),
+      prefixIconConstraints: const BoxConstraints(
+        minWidth: 48,
+      ),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: const Color(0xFFF1EDE6),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 18,
-        vertical: 18,
+        vertical: 17,
       ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(15),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(
+          color: Color(0xFFE5DED4),
+          width: 1,
+        ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(15),
         borderSide: const BorderSide(
           color: teal,
-          width: 1.5,
+          width: 1.6,
         ),
       ),
     );
   }
 
+  // FIELD LABEL
   Widget _buildLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 9),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
         style: GoogleFonts.nunito(
           fontSize: 16,
-          fontWeight: FontWeight.w800,
-          color: const Color(0xFF514D46),
+          fontWeight: FontWeight.w900,
+          color: const Color(0xFF3F625E),
         ),
       ),
     );
@@ -196,13 +244,14 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 24),
+            padding: const EdgeInsets.only(bottom: 18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Illustration with overlapping headline
+
+                // ILLUSTRATION AND HEADLINE
                 SizedBox(
-                  height: 300,
+                  height: 270,
                   width: double.infinity,
                   child: Stack(
                     alignment: Alignment.bottomCenter,
@@ -211,7 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         top: 0,
                         left: 0,
                         right: 0,
-                        height: 280,
+                        height: 250,
                         child: ShaderMask(
                           shaderCallback: (bounds) {
                             return const LinearGradient(
@@ -237,7 +286,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
 
                       Positioned(
-                        bottom:5,
+                        bottom: 0,
                         left: 10,
                         right: 10,
                         child: FittedBox(
@@ -247,9 +296,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             textAlign: TextAlign.center,
                             maxLines: 1,
                             style: GoogleFonts.fredoka(
-                              fontSize: 36,
+                              fontSize: 35,
                               fontWeight: FontWeight.w700,
-                              letterSpacing: -1.0,
+                              letterSpacing: -1,
                               color: teal,
                             ),
                           ),
@@ -259,54 +308,66 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                const SizedBox(height:2),
+                const SizedBox(height: 8),
 
-                // Tagline
-                Text(
-                  'A little wonder awaits you.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.fredoka(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w500,
-                    color: terracotta,
-                  ),
+                // TAGLINE
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.auto_awesome,
+                      color: mustard,
+                      size: 17,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'A little wonder awaits you.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.fredoka(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
+                        color: terracotta,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.auto_awesome,
+                      color: mustard,
+                      size: 17,
+                    ),
+                  ],
                 ),
 
-                const SizedBox(height: 7),
+                const SizedBox(height: 25),
 
-                // Supporting text
-                Text(
-                  'Sign in and let your imagination grow.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.nunito(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF77736C),
-                  ),
-                ),
-
-                const SizedBox(height: 30),
-
-                // Login form
+                // LOGIN FORM
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 28),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+
+                      // EMAIL
                       _buildLabel('Email Address'),
 
                       TextField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
+                        style: GoogleFonts.nunito(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF303B38),
+                        ),
                         decoration: _inputDecoration(
                           hint: 'Enter your email',
                           icon: Icons.mail_outline_rounded,
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 18),
 
+                      // PASSWORD
                       _buildLabel('Password'),
 
                       TextField(
@@ -314,6 +375,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         obscureText: !_isPasswordVisible,
                         textInputAction: TextInputAction.done,
                         onSubmitted: (_) => _login(),
+                        style: GoogleFonts.nunito(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF303B38),
+                        ),
                         decoration: _inputDecoration(
                           hint: 'Enter your password',
                           icon: Icons.lock_outline_rounded,
@@ -329,14 +395,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
                               color: teal,
+                              size: 22,
                             ),
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 7),
 
-                      // Forgot password
+                      // FORGOT PASSWORD
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
@@ -344,23 +411,27 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextButton.styleFrom(
                             foregroundColor: terracotta,
                             padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
                           ),
                           child: Text(
                             'Forgot Password?',
                             style: GoogleFonts.nunito(
-                              fontSize: 15,
+                              fontSize: 14,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 11),
 
-                      // Login button
+                      // EMAIL LOGIN BUTTON
                       SizedBox(
                         width: double.infinity,
-                        height: 58,
+                        height: 54,
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
@@ -370,13 +441,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             teal.withValues(alpha: 0.6),
                             elevation: 2,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(17),
                             ),
                           ),
                           child: _isLoading
                               ? const SizedBox(
-                            height: 24,
-                            width: 24,
+                            height: 23,
+                            width: 23,
                             child: CircularProgressIndicator(
                               color: Colors.white,
                               strokeWidth: 2.5,
@@ -386,15 +457,94 @@ class _LoginScreenState extends State<LoginScreen> {
                             'Let’s Explore!',
                             style: GoogleFonts.fredoka(
                               fontSize: 21,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 22),
+                      const SizedBox(height: 10),
 
-                      // Create account
+                      // OR DIVIDER
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Divider(
+                              color: Color(0xFFD8D1C7),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                            ),
+                            child: Text(
+                              'OR',
+                              style: GoogleFonts.nunito(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF77736C),
+                              ),
+                            ),
+                          ),
+                          const Expanded(
+                            child: Divider(
+                              color: Color(0xFFD8D1C7),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // GOOGLE SIGN-IN
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: OutlinedButton(
+                          onPressed:
+                          _isLoading ? null : _signInWithGoogle,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF514D46),
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(
+                              color: Color(0xFFE5DED4),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.network(
+                                'https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png',
+                                width: 21,
+                                height: 21,
+                                errorBuilder:
+                                    (context, error, stackTrace) {
+                                  return const Icon(
+                                    Icons.g_mobiledata,
+                                    size: 27,
+                                    color: Colors.blue,
+                                  );
+                                },
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Continue with Google',
+                                style: GoogleFonts.nunito(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 17),
+
+                      // CREATE ACCOUNT
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -402,7 +552,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Text(
                               'New to WonderSpace? ',
                               style: GoogleFonts.nunito(
-                                fontSize: 15,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF77736C),
                               ),
@@ -417,7 +567,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Text(
                               'Create Account',
                               style: GoogleFonts.nunito(
-                                fontSize: 15,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w900,
                                 color: teal,
                               ),
@@ -427,35 +577,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                ),
-
-                const SizedBox(height: 28),
-
-                // Footer
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.auto_awesome,
-                      color: mustard,
-                      size: 17,
-                    ),
-                    const SizedBox(width: 7),
-                    Text(
-                      'A world of wonder is waiting for you',
-                      style: GoogleFonts.fredoka(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF8C867D),
-                      ),
-                    ),
-                    const SizedBox(width: 7),
-                    Icon(
-                      Icons.auto_awesome,
-                      color: sage,
-                      size: 17,
-                    ),
-                  ],
                 ),
               ],
             ),
