@@ -11,125 +11,179 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
-  bool isLoading = false;
-  bool obscurePassword = true;
+  bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
-  static const cream = Color(0xFFFAF7F2);
-  static const teal = Color(0xFF5D8A85);
-  static const terracotta = Color(0xFFBA6D4D);
-  static const mustard = Color(0xFFD9AE54);
+  static const Color cream = Color(0xFFFAF7F2);
+  static const Color teal = Color(0xFF5D8A85);
+  static const Color mustard = Color(0xFFD9AE54);
+  static const Color terracotta = Color(0xFFBA6D4D);
+  static const Color sage = Color(0xFF8EA88E);
 
   @override
   void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  void showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: teal,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
 
-  Future<void> login() async {
-    if (emailController.text.trim().isEmpty ||
-        passwordController.text.isEmpty) {
-      showMessage('Please enter your email and password.');
+    if (email.isEmpty || password.isEmpty) {
+      _showMessage('Please enter your email and password.');
       return;
     }
 
-    setState(() => isLoading = true);
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+        email: email,
+        password: password,
       );
 
       if (!mounted) return;
 
-      showMessage('Welcome back to WonderSpace! ✨');
+      _showMessage('Welcome back to WonderSpace! ✨');
     } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
+      String message;
 
-      if (e.code == 'invalid-credential' ||
-          e.code == 'wrong-password' ||
-          e.code == 'user-not-found') {
-        showMessage('Incorrect email or password. Please try again.');
-      } else if (e.code == 'invalid-email') {
-        showMessage('Please enter a valid email address.');
-      } else {
-        showMessage(e.message ?? 'Something went wrong. Please try again.');
+      switch (e.code) {
+        case 'user-not-found':
+          message = 'No account found with this email.';
+          break;
+        case 'wrong-password':
+          message = 'Incorrect password. Please try again.';
+          break;
+        case 'invalid-email':
+          message = 'Please enter a valid email address.';
+          break;
+        case 'invalid-credential':
+          message = 'Invalid email or password.';
+          break;
+        case 'user-disabled':
+          message = 'This account has been disabled.';
+          break;
+        case 'too-many-requests':
+          message = 'Too many attempts. Please try again later.';
+          break;
+        default:
+          message = e.message ?? 'Something went wrong. Please try again.';
       }
-    } catch (_) {
+
       if (!mounted) return;
-      showMessage('Something went wrong. Please try again.');
+      _showMessage(message);
+    } catch (e) {
+      if (!mounted) return;
+      _showMessage('Something went wrong. Please try again.');
     } finally {
       if (mounted) {
-        setState(() => isLoading = false);
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
 
-  Future<void> forgotPassword() async {
-    final email = emailController.text.trim();
+  Future<void> _forgotPassword() async {
+    final email = _emailController.text.trim();
 
     if (email.isEmpty) {
-      showMessage('Enter your email first to reset your password.');
+      _showMessage('Please enter your email address first.');
       return;
     }
 
     try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      await FirebaseAuth.instance.sendPasswordResetEmail(
+        email: email,
+      );
+
       if (!mounted) return;
-      showMessage('Password reset email sent! Check your inbox.');
+      _showMessage('Password reset link sent to your email!');
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      showMessage(e.message ?? 'Could not send reset email.');
+      _showMessage(e.message ?? 'Unable to send reset email.');
     }
   }
 
-  InputDecoration inputDecoration({
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.nunito(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        backgroundColor: teal,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration({
     required String hint,
     required IconData icon,
-    Widget? suffix,
+    Widget? suffixIcon,
   }) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: Icon(icon, color: teal, size: 21),
-      suffixIcon: suffix,
-      filled: true,
-      fillColor: const Color(0xFFEFECE5).withValues(alpha: 0.55),
       hintStyle: GoogleFonts.nunito(
-        color: const Color(0xFF9B978F),
-        fontSize: 14,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: const Color(0xFFAAA49B),
       ),
+      prefixIcon: Icon(
+        icon,
+        color: teal,
+        size: 22,
+      ),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: const Color(0xFFF1EDE6),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 18,
-        vertical: 17,
+        vertical: 18,
       ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(
-          color: Color(0xFFE5DED2),
-          width: 1,
-        ),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: teal, width: 1.5),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(
+          color: teal,
+          width: 1.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: Text(
+        text,
+        style: GoogleFonts.nunito(
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+          color: const Color(0xFF514D46),
+        ),
       ),
     );
   }
@@ -139,273 +193,273 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: cream,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
-                child: Column(
-                  children: [
-                    // Illustration
-                    SizedBox(
-                      width: double.infinity,
-                      height: 300,
-                      child: ShaderMask(
-                        shaderCallback: (bounds) {
-                          return const LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black,
-                              Colors.black,
-                              Colors.transparent,
-                            ],
-                            stops: [0.0, 0.65, 1.0],
-                          ).createShader(bounds);
-                        },
-                        blendMode: BlendMode.dstIn,
-                        child: Image.asset(
-                          'assets/images/wonderspace_login.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const SizedBox.shrink();
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Illustration with overlapping headline
+                SizedBox(
+                  height: 300,
+                  width: double.infinity,
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: 280,
+                        child: ShaderMask(
+                          shaderCallback: (bounds) {
+                            return const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black,
+                                Colors.black,
+                                Colors.transparent,
+                              ],
+                              stops: [0.0, 0.72, 1.0],
+                            ).createShader(bounds);
                           },
+                          blendMode: BlendMode.dstIn,
+                          child: Image.asset(
+                            'assets/images/wonderspace_login.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const SizedBox.shrink();
+                            },
+                          ),
                         ),
                       ),
-                    ),
 
-                    // Welcome section
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 28),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Welcome back!',
+                      Positioned(
+                        bottom:5,
+                        left: 10,
+                        right: 10,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Ready for a little adventure?',
                             textAlign: TextAlign.center,
+                            maxLines: 1,
                             style: GoogleFonts.fredoka(
-                              fontSize: 34,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 36,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -1.0,
                               color: teal,
                             ),
                           ),
-
-                          const SizedBox(height: 4),
-
-                          Text(
-                            'Your next little adventure awaits.',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.nunito(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: terracotta,
-                            ),
-                          ),
-
-                          const SizedBox(height: 5),
-
-                          Text(
-                            'Sign in and let your imagination grow.',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.nunito(
-                              fontSize: 13,
-                              color: const Color(0xFF8A867F),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
+                  ),
+                ),
 
-                    const SizedBox(height: 28),
+                const SizedBox(height:2),
 
-                    // Login form
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 28),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Email address',
-                            style: GoogleFonts.nunito(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF5F625C),
-                            ),
-                          ),
+                // Tagline
+                Text(
+                  'A little wonder awaits you.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.fredoka(
+                    fontSize: 21,
+                    fontWeight: FontWeight.w500,
+                    color: terracotta,
+                  ),
+                ),
 
-                          const SizedBox(height: 8),
+                const SizedBox(height: 7),
 
-                          TextField(
-                            controller: emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.next,
-                            decoration: inputDecoration(
-                              hint: 'Enter your email',
-                              icon: Icons.mail_outline_rounded,
-                            ),
-                          ),
+                // Supporting text
+                Text(
+                  'Sign in and let your imagination grow.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.nunito(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF77736C),
+                  ),
+                ),
 
-                          const SizedBox(height: 18),
+                const SizedBox(height: 30),
 
-                          Text(
-                            'Password',
-                            style: GoogleFonts.nunito(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF5F625C),
-                            ),
-                          ),
+                // Login form
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 28),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLabel('Email Address'),
 
-                          const SizedBox(height: 8),
-
-                          TextField(
-                            controller: passwordController,
-                            obscureText: obscurePassword,
-                            textInputAction: TextInputAction.done,
-                            onSubmitted: (_) => login(),
-                            decoration: inputDecoration(
-                              hint: 'Enter your password',
-                              icon: Icons.lock_outline_rounded,
-                              suffix: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    obscurePassword = !obscurePassword;
-                                  });
-                                },
-                                icon: Icon(
-                                  obscurePassword
-                                      ? Icons.visibility_off_outlined
-                                      : Icons.visibility_outlined,
-                                  color: teal,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: forgotPassword,
-                              child: Text(
-                                'Forgot password?',
-                                style: GoogleFonts.nunito(
-                                  color: teal,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          // Login button
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: isLoading ? null : login,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: teal,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18),
-                                ),
-                              ),
-                              child: isLoading
-                                  ? const SizedBox(
-                                height: 22,
-                                width: 22,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                                  : Text(
-                                "Let's Explore!",
-                                style: GoogleFonts.fredoka(
-                                  fontSize: 19,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Create account
-                          Center(
-                            child: RichText(
-                              text: TextSpan(
-                                style: GoogleFonts.nunito(
-                                  fontSize: 13,
-                                  color: const Color(0xFF77736C),
-                                ),
-                                children: [
-                                  const TextSpan(
-                                    text: "New to WonderSpace? ",
-                                  ),
-                                  WidgetSpan(
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        showMessage(
-                                          'Sign-up screen coming next!',
-                                        );
-                                      },
-                                      child: Text(
-                                        'Create Account',
-                                        style: GoogleFonts.nunito(
-                                          color: terracotta,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+                      TextField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        decoration: _inputDecoration(
+                          hint: 'Enter your email',
+                          icon: Icons.mail_outline_rounded,
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 28),
+                      const SizedBox(height: 20),
 
-                    // Decorative footer
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 22),
-                      child: Row(
+                      _buildLabel('Password'),
+
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: !_isPasswordVisible,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _login(),
+                        decoration: _inputDecoration(
+                          hint: 'Enter your password',
+                          icon: Icons.lock_outline_rounded,
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible =
+                                !_isPasswordVisible;
+                              });
+                            },
+                            icon: Icon(
+                              _isPasswordVisible
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: teal,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Forgot password
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _forgotPassword,
+                          style: TextButton.styleFrom(
+                            foregroundColor: terracotta,
+                            padding: EdgeInsets.zero,
+                          ),
+                          child: Text(
+                            'Forgot Password?',
+                            style: GoogleFonts.nunito(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      // Login button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 58,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _login,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: teal,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor:
+                            teal.withValues(alpha: 0.6),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                              : Text(
+                            'Let’s Explore!',
+                            style: GoogleFonts.fredoka(
+                              fontSize: 21,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 22),
+
+                      // Create account
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.star_rounded,
-                            size: 15,
-                            color: mustard,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Little minds. Big adventures.',
-                            style: GoogleFonts.fredoka(
-                              fontSize: 13,
-                              color: const Color(0xFF9B978F),
+                          Flexible(
+                            child: Text(
+                              'New to WonderSpace? ',
+                              style: GoogleFonts.nunito(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF77736C),
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          Icon(
-                            Icons.star_rounded,
-                            size: 15,
-                            color: mustard,
+                          GestureDetector(
+                            onTap: () {
+                              _showMessage(
+                                'Sign-up screen coming next!',
+                              );
+                            },
+                            child: Text(
+                              'Create Account',
+                              style: GoogleFonts.nunito(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                                color: teal,
+                              ),
+                            ),
                           ),
                         ],
                       ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 28),
+
+                // Footer
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.auto_awesome,
+                      color: mustard,
+                      size: 17,
+                    ),
+                    const SizedBox(width: 7),
+                    Text(
+                      'A world of wonder is waiting for you',
+                      style: GoogleFonts.fredoka(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF8C867D),
+                      ),
+                    ),
+                    const SizedBox(width: 7),
+                    Icon(
+                      Icons.auto_awesome,
+                      color: sage,
+                      size: 17,
                     ),
                   ],
                 ),
-              ),
-            );
-          },
+              ],
+            ),
+          ),
         ),
       ),
     );
