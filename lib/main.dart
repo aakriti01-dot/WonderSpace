@@ -1,11 +1,19 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import 'screens/splash_screen.dart';
+import 'screens/login_screen.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -27,6 +35,7 @@ class WonderSpaceApp extends StatelessWidget {
     return MaterialApp(
       title: 'WonderSpace',
       debugShowCheckedModeBanner: false,
+
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFFAF7F2),
@@ -36,8 +45,9 @@ class WonderSpaceApp extends StatelessWidget {
           surface: const Color(0xFFFAF7F2),
         ),
       ),
+
       home: const SplashScreen(
-        nextScreen: SizedBox.shrink(),
+        nextScreen: LoginScreen(),
       ),
     );
   }
