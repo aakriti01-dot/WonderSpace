@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -14,6 +15,9 @@ class _ResetPasswordScreenState
 
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final AuthService _authService = AuthService();
+
+  bool _isLoading = false;
 
   // WonderSpace Theme
   static const Color cream = Color(0xFFFAF7F2);
@@ -30,14 +34,41 @@ class _ResetPasswordScreenState
     super.dispose();
   }
 
-  void _sendResetLink() {
-    if (_formKey.currentState!.validate()) {
+  // SEND RESET EMAIL
+  Future<void> _sendResetLink() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final error = await _authService.resetPassword(
+      _emailController.text.trim(),
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (error == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Email validated successfully!',
+            'If an account exists with this email, a password reset link will be sent.',
           ),
           backgroundColor: teal,
+          duration: Duration(seconds: 5),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: terracotta,
         ),
       );
     }
@@ -74,7 +105,7 @@ class _ResetPasswordScreenState
                   height: 120,
                   width: 120,
                   decoration: BoxDecoration(
-                    color: lavender.withOpacity(0.35),
+                    color: lavender.withValues(alpha: 0.35),
                     shape: BoxShape.circle,
                   ),
                   child: Stack(
@@ -160,6 +191,7 @@ class _ResetPasswordScreenState
                 child: TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  enabled: !_isLoading,
                   decoration: InputDecoration(
                     hintText: 'Enter your registered email',
                     hintStyle: const TextStyle(
@@ -216,21 +248,33 @@ class _ResetPasswordScreenState
 
               const SizedBox(height: 28),
 
-              // Send Reset Link
+              // Send Reset Link Button
               SizedBox(
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton(
-                  onPressed: _sendResetLink,
+                  onPressed: _isLoading ? null : _sendResetLink,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: teal,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: teal.withValues(
+                      alpha: 0.6,
+                    ),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
+                  child: _isLoading
+                      ? const SizedBox(
+                    height: 23,
+                    width: 23,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2.5,
+                    ),
+                  )
+                      : const Text(
                     'Send Reset Link',
                     style: TextStyle(
                       fontSize: 16,
@@ -245,7 +289,9 @@ class _ResetPasswordScreenState
               // Back to Login
               Center(
                 child: TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: _isLoading
+                      ? null
+                      : () => Navigator.pop(context),
                   child: const Text.rich(
                     TextSpan(
                       text: 'Remember your password? ',

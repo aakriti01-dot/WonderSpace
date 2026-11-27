@@ -8,6 +8,7 @@ import 'user_service.dart';
 class AuthService {
   final UserService _userService = UserService();
 
+  // REGISTER
   Future<String?> register({
     required String name,
     required String email,
@@ -37,7 +38,7 @@ class AuthService {
 
     try {
       credential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailAddress,
         password: password,
       );
@@ -46,15 +47,15 @@ class AuthService {
 
       return switch (error.code) {
         'email-already-in-use' =>
-          'An account already exists. Please log in.',
+        'An account already exists. Please log in.',
         'invalid-email' => 'Enter a valid email address.',
         'weak-password' => 'Choose a stronger password.',
         'operation-not-allowed' =>
-          'Email registration is currently unavailable.',
+        'Email registration is currently unavailable.',
         'network-request-failed' =>
-          'Check your connection and try again.',
+        'Check your connection and try again.',
         'too-many-requests' =>
-          'Too many attempts. Wait a moment and try again.',
+        'Too many attempts. Wait a moment and try again.',
         _ => 'Could not create your account. Please try again.',
       };
     }
@@ -85,7 +86,6 @@ class AuthService {
       );
 
       debugPrint('FIRESTORE: Profile save completed successfully.');
-
     } on FirebaseException catch (error) {
       debugPrint('FIRESTORE ERROR: ${error.code}');
       debugPrint('FIRESTORE ERROR MESSAGE: ${error.message}');
@@ -100,7 +100,31 @@ class AuthService {
     return null;
   }
 
-  // Logout the current user
+  // RESET PASSWORD
+  Future<String?> resetPassword(String email) async {
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(
+        email: email.trim(),
+      );
+
+      return null;
+    } on FirebaseAuthException catch (error) {
+      debugPrint('RESET PASSWORD ERROR: ${error.code}');
+
+      return switch (error.code) {
+        'invalid-email' => 'Please enter a valid email address.',
+        'too-many-requests' =>
+        'Too many requests. Please try again later.',
+        'network-request-failed' =>
+        'Please check your internet connection.',
+        _ => 'Unable to send reset email. Please try again.',
+      };
+    } catch (_) {
+      return 'Something went wrong. Please try again.';
+    }
+  }
+
+  // LOGOUT
   Future<void> logout() async {
     await FirebaseAuth.instance.signOut();
   }
