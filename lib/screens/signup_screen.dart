@@ -314,8 +314,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       children: [
                         const Text('Already have an account?'),
                         TextButton(
-                          onPressed: () =>
-                              _pending('Login integration pending.'),
+                          onPressed: () => Navigator.of(context).maybePop(),
                           child: const Text(
                             'Log in',
                             style: TextStyle(

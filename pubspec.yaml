@@ -39,6 +39,8 @@ dependencies:
   firebase_auth: ^7.1.0
   cloud_firestore: ^7.2.0
   google_sign_in: ^7.2.0
+  http: ^1.6.0
+  flutter_svg: ^2.5.1
 
 dev_dependencies:
   flutter_test:
@@ -59,6 +61,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/wonderspace_signup_kids.png
     - assets/images/wonderspace_splash.png
     - assets/images/wonderspace_login.png
 
