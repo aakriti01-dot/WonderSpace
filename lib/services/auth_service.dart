@@ -1,14 +1,6 @@
-import 'dart:async';
-import 'dart:convert';
-
-import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
-  static const _baseUrl = String.fromEnvironment(
-    'WONDERSPACE_API_URL',
-    defaultValue: 'http://127.0.0.1:5000',
-  );
-
   Future<String?> register({
     required String name,
     required String email,
@@ -17,34 +9,50 @@ class AuthService {
     required String confirmPassword,
     required bool acceptedTerms,
   }) async {
-    try {
-      final response = await http
-          .post(
-            Uri.parse('$_baseUrl/api/register'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'name': name,
-              'email': email,
-              'password': password,
-              if (contactNumber != null) 'contact_number': contactNumber,
-              'confirm_password': confirmPassword,
-              'accepted_terms': acceptedTerms,
-            }),
-          )
-          .timeout(const Duration(seconds: 10));
-      if (response.statusCode == 201) return null;
+    final fullName = name.trim();
+    final emailAddress = email.trim();
 
-      final payload = jsonDecode(response.body);
-      if (payload is Map<String, dynamic> && payload['message'] is String) {
-        return payload['message'] as String;
-      }
-    } on http.ClientException {
-      return 'Could not reach the registration server. Check that it is running.';
-    } on TimeoutException {
-      return 'The registration server took too long to respond.';
-    } on FormatException {
-      return 'The registration server returned an unexpected response.';
+    if (fullName.isEmpty) return 'Enter your full name.';
+    if (emailAddress.isEmpty) return 'Enter your email address.';
+    if (password != confirmPassword) return 'Passwords do not match.';
+    if (!acceptedTerms) return 'Accept the terms to create an account.';
+
+    final passwordLength = password.runes.length;
+    if (passwordLength < 8 || passwordLength > 128) {
+      return 'Use 8 to 128 characters for your password.';
     }
-    return 'Could not create your account. Please try again.';
+
+    late final UserCredential credential;
+    try {
+      credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: emailAddress,
+        password: password,
+      );
+    } on FirebaseAuthException catch (error) {
+      return switch (error.code) {
+        'email-already-in-use' => 'An account already exists. Please log in.',
+        'invalid-email' => 'Enter a valid email address.',
+        'weak-password' => 'Choose a stronger password.',
+        'operation-not-allowed' =>
+          'Email registration is currently unavailable.',
+        'network-request-failed' => 'Check your connection and try again.',
+        'too-many-requests' =>
+          'Too many attempts. Wait a moment and try again.',
+        _ => 'Could not create your account. Please try again.',
+      };
+    }
+
+    final user = credential.user;
+    if (user == null) {
+      return 'Could not confirm your new account. Try logging in.';
+    }
+
+    try {
+      await user.updateDisplayName(fullName);
+    } on FirebaseAuthException {
+      return 'Your account was created, but your name could not be saved. You can log in.';
+    }
+
+    return null;
   }
 }
