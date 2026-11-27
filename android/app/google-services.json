@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "101658931503",
+    "project_id": "wonderspace-fd722",
+    "storage_bucket": "wonderspace-fd722.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:101658931503:android:3feb8e0b11de1a30ea31da",
+        "android_client_info": {
+          "package_name": "com.example.wonderspace"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "101658931503-vh2vcl20dmme47up6cfb30q8mhegco1c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSXLn7hqX2wYdwLN3pfnOFg1t4ewCIyRM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "101658931503-vh2vcl20dmme47up6cfb30q8mhegco1c.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "101658931503-efk3sr1du8tn2g4qs67gsnb69fbc9sni.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.wonderspace"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:101658931503:android:44de60a39f61c118ea31da",
+        "android_client_info": {
+          "package_name": "com.wonderspace.frontend"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "101658931503-vh2vcl20dmme47up6cfb30q8mhegco1c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSXLn7hqX2wYdwLN3pfnOFg1t4ewCIyRM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "101658931503-vh2vcl20dmme47up6cfb30q8mhegco1c.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "101658931503-efk3sr1du8tn2g4qs67gsnb69fbc9sni.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.wonderspace"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
