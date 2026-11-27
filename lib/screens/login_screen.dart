@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -560,10 +561,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           GestureDetector(
                             onTap: () {
-                              _showMessage(
-                                'Sign-up screen coming next!',
-                              );
-                            },
+                              Navigator.push(
+                               context,
+                               MaterialPageRoute(        
+                                builder: (context) => const SignupScreen(),
+                              ),
+                            );
+                          },
                             child: Text(
                               'Create Account',
                               style: GoogleFonts.nunito(
